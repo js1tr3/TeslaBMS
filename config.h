@@ -3,7 +3,7 @@
 #include <Arduino.h>
 
 //Set to the proper port for your USB connection - SerialUSB on Due (Native) or Serial for Due (Programming) or Teensy
-#define SERIALCONSOLE   SerialUSB
+#define SERIALCONSOLE   Serial
 
 //Define this to be the serial port the Tesla BMS modules are connected to.
 //On the Due you need to use a USART port (Serial1, Serial2, Serial3) and update the call to serialSpecialInit if not Serial1
@@ -61,3 +61,30 @@ typedef struct {
     float balanceVoltage;
     float balanceHyst;
 } EEPROMSettings;
+
+typedef union {
+    uint64_t value;
+	struct {
+		uint32_t low;
+		uint32_t high;
+	};
+	struct {
+        uint16_t s0;
+		uint16_t s1;
+		uint16_t s2;
+		uint16_t s3;
+    };
+	uint8_t bytes[8];
+	uint8_t byte[8]; //alternate name so you can omit the s if you feel it makes more sense
+} BytesUnion;
+
+typedef struct
+{
+	uint32_t id;		// EID if ide set, SID otherwise
+	uint8_t rtr;		// Remote Transmission Request
+	uint8_t priority;	// Priority but only important for TX frames and then only for special uses.
+	uint8_t extended;	// Extended ID flag
+	uint8_t length;		// Number of data bytes
+	BytesUnion data;	// 64 bits - lots of ways to access it.
+} CAN_FRAME;
+

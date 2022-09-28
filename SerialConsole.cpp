@@ -24,8 +24,8 @@
 
  */
 
-#include <due_wire.h>
-#include <Wire_EEPROM.h>
+//#include <due_wire.h>
+//#include <Wire_EEPROM.h>
 #include "SerialConsole.h"
 #include "Logger.h"
 #include "BMSModuleManager.h"
@@ -259,7 +259,7 @@ void SerialConsole::handleConfigCmd() {
     }
     if (needEEPROMWrite)
     {
-        EEPROM.write(EEPROM_PAGE, settings);
+       // EEPROM.write(EEPROM_PAGE, settings);
     }
 }
 

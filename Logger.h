@@ -29,7 +29,7 @@
 
 #include <Arduino.h>
 #include "config.h"
-
+#include<stdarg.h>
 class Logger {
 public:
     enum LogLevel {
@@ -53,5 +53,3 @@ private:
 };
 
 #endif /* LOGGER_H_ */
-
-

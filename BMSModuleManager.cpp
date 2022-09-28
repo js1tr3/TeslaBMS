@@ -2,7 +2,7 @@
 #include "BMSModuleManager.h"
 #include "BMSUtil.h"
 #include "Logger.h"
-
+#include <mcp_can.h>
 extern EEPROMSettings settings;
 
 BMSModuleManager::BMSModuleManager()
@@ -312,45 +312,45 @@ void BMSModuleManager::printPackSummary()
             Logger::console("  Voltage: %fV   (%fV-%fV)     Temperatures: (%fC-%fC)", modules[y].getModuleVoltage(), 
                             modules[y].getLowCellV(), modules[y].getHighCellV(), modules[y].getLowTemp(), modules[y].getHighTemp());
 
-            SerialUSB.print("  Currently balancing cells: ");
+            SERIALCONSOLE.print("  Currently balancing cells: ");
             for (int i = 0; i < 6; i++)
             {                
                 if (modules[y].getBalancingState(i) == 1) 
                 {                    
-                    SerialUSB.print(i);
-                    SerialUSB.print(" ");
+                    SERIALCONSOLE.print(i);
+                    SERIALCONSOLE.print(" ");
                 }
             }
-            SerialUSB.println();
+            SERIALCONSOLE.println();
 
             if (faults > 0)
             {
                 Logger::console("  MODULE IS FAULTED:");
                 if (faults & 1)
                 {
-                    SerialUSB.print("    Overvoltage Cell Numbers (1-6): ");
+                    SERIALCONSOLE.print("    Overvoltage Cell Numbers (1-6): ");
                     for (int i = 0; i < 6; i++)
                     {
                         if (COV & (1 << i)) 
                         {
-                            SerialUSB.print(i+1);
-                            SerialUSB.print(" ");
+                            SERIALCONSOLE.print(i+1);
+                            SERIALCONSOLE.print(" ");
                         }
                     }
-                    SerialUSB.println();
+                    SERIALCONSOLE.println();
                 }
                 if (faults & 2)
                 {
-                    SerialUSB.print("    Undervoltage Cell Numbers (1-6): ");
+                    SERIALCONSOLE.print("    Undervoltage Cell Numbers (1-6): ");
                     for (int i = 0; i < 6; i++)
                     {
                         if (CUV & (1 << i)) 
                         {
-                            SerialUSB.print(i+1);
-                            SerialUSB.print(" ");
+                            SERIALCONSOLE.print(i+1);
+                            SERIALCONSOLE.print(" ");
                         }
                     }
-                    SerialUSB.println();
+                    SERIALCONSOLE.println();
                 }
                 if (faults & 4)
                 {
@@ -405,7 +405,7 @@ void BMSModuleManager::printPackSummary()
                     Logger::console("    Address not registered");
                 }
             }
-            if (faults > 0 || alerts > 0) SerialUSB.println();
+            if (faults > 0 || alerts > 0) SERIALCONSOLE.println();
         }
     }
 }
@@ -436,59 +436,59 @@ void BMSModuleManager::printPackDetails()
             COV = modules[y].getCOVCells();
             CUV = modules[y].getCUVCells();
 
-            SerialUSB.print("Module #");
-            SerialUSB.print(y);
-            if (y < 10) SerialUSB.print(" ");
-            SerialUSB.print("  ");
-            SerialUSB.print(modules[y].getModuleVoltage());
-            SerialUSB.print("V");
+            SERIALCONSOLE.print("Module #");
+            SERIALCONSOLE.print(y);
+            if (y < 10) SERIALCONSOLE.print(" ");
+            SERIALCONSOLE.print("  ");
+            SERIALCONSOLE.print(modules[y].getModuleVoltage());
+            SERIALCONSOLE.print("V");
             for (int i = 0; i < 6; i++)
             {
-                if (cellNum < 10) SerialUSB.print(" ");
-                SerialUSB.print("  Cell");
-                SerialUSB.print(cellNum++);
-                SerialUSB.print(": ");
-                SerialUSB.print(modules[y].getCellVoltage(i));
-                SerialUSB.print("V");
-                if (modules[y].getBalancingState(i) == 1) SerialUSB.print("*");
-                else SerialUSB.print(" ");
+                if (cellNum < 10) SERIALCONSOLE.print(" ");
+                SERIALCONSOLE.print("  Cell");
+                SERIALCONSOLE.print(cellNum++);
+                SERIALCONSOLE.print(": ");
+                SERIALCONSOLE.print(modules[y].getCellVoltage(i));
+                SERIALCONSOLE.print("V");
+                if (modules[y].getBalancingState(i) == 1) SERIALCONSOLE.print("*");
+                else SERIALCONSOLE.print(" ");
             }
-            SerialUSB.print("  Neg Term Temp: ");
-            SerialUSB.print(modules[y].getTemperature(0));
-            SerialUSB.print("C  Pos Term Temp: ");
-            SerialUSB.print(modules[y].getTemperature(1)); 
-            SerialUSB.println("C");
+            SERIALCONSOLE.print("  Neg Term Temp: ");
+            SERIALCONSOLE.print(modules[y].getTemperature(0));
+            SERIALCONSOLE.print("C  Pos Term Temp: ");
+            SERIALCONSOLE.print(modules[y].getTemperature(1)); 
+            SERIALCONSOLE.println("C");
         }
     }
 }
 
-void BMSModuleManager::processCANMsg(CAN_FRAME &frame)
-{
-    uint8_t battId = (frame.id >> 16) & 0xF;
-    uint8_t moduleId = (frame.id >> 8) & 0xFF;
-    uint8_t cellId = (frame.id) & 0xFF;
+// void BMSModuleManager::processCANMsg(CAN_FRAME &frame)
+// {
+//     uint8_t battId = (frame.id >> 16) & 0xF;
+//     uint8_t moduleId = (frame.id >> 8) & 0xFF;
+//     uint8_t cellId = (frame.id) & 0xFF;
     
-    if (moduleId = 0xFF)  //every module
-    {
-        if (cellId == 0xFF) sendBatterySummary();        
-        else 
-        {
-            for (int i = 1; i <= MAX_MODULE_ADDR; i++) 
-            {
-                if (modules[i].isExisting()) 
-                {
-                    sendCellDetails(i, cellId);
-                    delayMicroseconds(500);
-                }
-            }
-        }
-    }
-    else //a specific module
-    {
-        if (cellId == 0xFF) sendModuleSummary(moduleId);
-        else sendCellDetails(moduleId, cellId);
-    }
-}
+//     if (moduleId = 0xFF)  //every module
+//     {
+//         if (cellId == 0xFF) sendBatterySummary();        
+//         else 
+//         {
+//             for (int i = 1; i <= MAX_MODULE_ADDR; i++) 
+//             {
+//                 if (modules[i].isExisting()) 
+//                 {
+//                     sendCellDetails(i, cellId);
+//                     delayMicroseconds(500);
+//                 }
+//             }
+//         }
+//     }
+//     else //a specific module
+//     {
+//         if (cellId == 0xFF) sendModuleSummary(moduleId);
+//         else sendCellDetails(moduleId, cellId);
+//     }
+// }
 
 void BMSModuleManager::sendBatterySummary()
 {
@@ -514,7 +514,7 @@ void BMSModuleManager::sendBatterySummary()
     avgTemp = (int)highestPackTemp + 40;
     if (avgTemp < 0) avgTemp = 0;
     outgoing.data.byte[7] = avgTemp;
-    Can0.sendFrame(outgoing);
+  //  Can0.sendFrame(outgoing);
 }
 
 void BMSModuleManager::sendModuleSummary(int module)
@@ -542,7 +542,7 @@ void BMSModuleManager::sendModuleSummary(int module)
     if (avgTemp < 0) avgTemp = 0;
     outgoing.data.byte[7] = avgTemp;
 
-    Can0.sendFrame(outgoing);
+ //   Can0.sendFrame(outgoing);
 }
 
 void BMSModuleManager::sendCellDetails(int module, int cell)
@@ -567,7 +567,7 @@ void BMSModuleManager::sendCellDetails(int module, int cell)
     outgoing.data.byte[6] = instTemp; // should be nearest temperature reading not highest but this works too.
     outgoing.data.byte[7] = 0; //Bit encoded fault data. No definitions for this yet.
 
-    Can0.sendFrame(outgoing);
+    //Can0.sendFrame(outgoing);
 }
 
 //The SerialConsole actually sets the battery ID to a specific value. We just have to set up the CAN filter here to
@@ -576,6 +576,6 @@ void BMSModuleManager::setBatteryID()
 {
     //Setup filter for direct access to our registered battery ID
     uint32_t canID = (0xBAul << 20) + (((uint32_t)settings.batteryID & 0xF) << 16);
-    Can0.setRXFilter(0, canID, 0x1FFF0000ul, true);
+  //  Can0.setRXFilter(0, canID, 0x1FFF0000ul, true);
 }
 
